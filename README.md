@@ -1,7 +1,7 @@
 Derby User Sign Out
 -------------------
 
-Sign out component for Derby JS [https://github.com/psirenny/derby-user](User).
+Sign out component for [https://github.com/psirenny/derby-user](Derby User).
 
 Installation
 ------------
