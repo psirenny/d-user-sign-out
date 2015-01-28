@@ -2,20 +2,12 @@ var request = require('superagent');
 
 function Component () {}
 
-Component.prototype.error = function (err) {
+Component.prototype.error = function (err, redirect) {
   this.model.del('submitting');
   this.model.set('error', err);
-  this.redirect();
-};
-
-Component.prototype.redirect = function () {
-  var model = this.model;
-  var error = model.get('error');
-  var redirect = model.get('errorRedirect') || model.get('redirect');
-  if (error && redirect) return this.app.history.push(redirect);
-  if (error) return;
-  redirect = model.get('successRedirect') || model.get('redirect');
-  if (redirect) return this.app.history.push(redirect);
+  if (!redirect) redirect = this.model.get('errorRedirect');
+  if (!redirect) redirect = this.model.get('redirect');
+  if (redirect) this.app.history.push(redirect);
 };
 
 Component.prototype.submit = function (e) {
@@ -23,9 +15,11 @@ Component.prototype.submit = function (e) {
   var self = this;
   var model = this.model;
   var basePath = model.get('basePath') || '';
-  var data = model.get('data');
   var origin = model.get('origin') || window.location.origin;
   var path = model.get('path') || '/signout';
+  var redirect = self.model.get('redirect');
+  var errorRedirect = self.model.get('errorRedirect') || redirect;
+  var successRedirect = self.model.get('successRedirect') || redirect;
   var url = model.get('url') || (origin + basePath + path);
 
   model.del('error');
@@ -34,15 +28,15 @@ Component.prototype.submit = function (e) {
   request
     .post(url)
     .withCredentials()
-    .send(data)
     .end(function (err, res) {
       var error = err || res.body.error;
       if (error) return self.error(error);
       self._submitted(res.body, function (err) {
         model.del('submitting');
-        if (err) return self.error(err);
+        if (err) return self.error(err, errorRedirect);
         self.emit('submitted');
-        self.redirect();
+        if (!successRedirect) return;
+        self.app.history.push(successRedirect);
       });
     });
 };
