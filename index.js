@@ -1,6 +1,8 @@
+'use strict';
+
 var request = require('superagent');
 
-function Component () {}
+function Component() {}
 
 Component.prototype.error = function (err, redirect) {
   this.model.del('submitting');
@@ -29,12 +31,12 @@ Component.prototype.submit = function (e) {
     .post(url)
     .withCredentials()
     .end(function (err, res) {
-      var error = err || res.body.error;
+      var error = err || (res.body && res.body.error);
       if (error) return self.error(error);
-      self._submitted(res.body, function (err) {
+      self._submitted(res.body || {}, function (err) {
         if (err) return self.error(err, errorRedirect);
         self.emit('submitted');
-        if (!successRedirect) return model.del('submitting');;
+        if (!successRedirect) return model.del('submitting');
         self.app.history.push(successRedirect);
       });
     });
