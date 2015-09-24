@@ -30,16 +30,22 @@ Component.prototype.submit = function (e) {
   request
     .post(url)
     .withCredentials()
+    .timeout(5000)
     .end(function (err, res) {
-      var error = err || (res.body && res.body.error);
-      if (error) return self.error(error);
-      self._submitted(res.body || {}, function (err) {
-        if (err) return self.error(err, errorRedirect);
-        self.emit('submitted');
-        if (!successRedirect) return model.del('submitting');
-        self.app.history.push(successRedirect);
+      self._response(err, res, function (err) {
+        if (err) return self.error(err);
+        self._submitted(res.body || {}, function (err) {
+          if (err) return self.error(err, errorRedirect);
+          self.emit('submitted');
+          if (!successRedirect) return model.del('submitting');
+          self.app.history.push(successRedirect);
+        });
       });
     });
+};
+
+Component.prototype._response = function (err, res, done) {
+  done(err || (res.body && res.body.error));
 };
 
 Component.prototype._submitted = function (done) {
